@@ -19,6 +19,12 @@ I'd like to morph `Magiq` into something that could enhance sorting and
 filtering in `JSONAPI::Resources`. It might remain a more generic library with
 an integration gem `jsonapi-resources-magiq` maybe?
 
+## Should I use this?
+
+Probably not, I put it here to see if other people like the idea and want to
+help integrate it with `JSONAPI::Resources` or so they can tell me that
+something better already exists.
+
 ## Installation
 
 You'll probably be using this in a Rails application or something similar,
@@ -36,9 +42,44 @@ $ bundle
 
 ## Usage
 
+```ruby
+# app/queries/posts_query.rb
+class PostsQuery < Magiq::Query
+  model { BlogPost }
+
+  # Allow lookup by BlogPost#id via one or up to 100 IDs passed in via "id" or
+  # "ids" param:
+  by :id, alias: :ids, limit: 100
+
+  # Allow sorting by BlogPost#id, #title, and #created_at
+  sort [
+    :id,
+    :title,
+    :created_at
+  ]
+
+  # Allow filtering by range on BlogPost#created_at
+  range :created_at, type: :date
+
+  # Apply a custom #search scope on the "q" param
+  param :q, type: :string do |q|
+    scope.search(q)
+  end
+end
+
+# app/controllers/posts_controller.rb
+class PostsController < ApplicationController
+  def index
+    query = PostsQuery.new(params)
+    scope = query.to_scope # An ActiveRecord scope
+    render json: scope
+  end
+end
+
+
+# GET /posts?ids[]=105&ids[]=109
+# GET /posts?sort=-id
 ```
-app/queries/
-TODO: Write usage instructions here
 
 ## Development
 
